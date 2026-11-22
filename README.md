@@ -107,6 +107,7 @@ cd src && sh run_qemu_test.sh
 │   └── dnloader.bin           ← 可直接放 SD 卡根目录
 ├── docs/
 │   ├── HW_CONSTANTS.md        ← ★ 硬件常量总表（带双源交叉验证标注）
+│   ├── UART_ACCESS.md         ← ★ UART 接入现状：micro-USB 路已证伪，焊盘路待定位
 │   └── BOOT0_ANATOMY.md       ← boot0 完整解剖
 └── evidence/
     └── qemu_test_output.txt

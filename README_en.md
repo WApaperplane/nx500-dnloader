@@ -112,6 +112,7 @@ with only the UART base swapped to `0x10009000`. Raw output in
 │   └── dnloader.bin           ← drop this in the SD card root
 ├── docs/
 │   ├── HW_CONSTANTS.md        ← ★ full hardware constant table (dual-source verified)
+│   ├── UART_ACCESS.md         ← ★ UART access status: micro-USB route disproven, pad route open
 │   └── BOOT0_ANATOMY.md       ← full boot0 dissection (Chinese)
 └── evidence/
     └── qemu_test_output.txt
