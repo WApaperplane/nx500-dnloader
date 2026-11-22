@@ -1,0 +1,12 @@
+
+
+=== NX500 dnloader skeleton v0.2 ===
+[dn] load addr : 0x60100000
+[dn] cpsr      : 0x600001d3
+[dn] sp        : 0x00000000
+[dn] --- uart self-check ---
+[dn] CR        : 0x00000301
+[dn] FR        : 0x00000090
+[dn] IBRD      : 0x00000036
+[dn] heartbeat:
+.......................................qemu-system-arm: terminating on signal 15 from pid 1123 (timeout)
