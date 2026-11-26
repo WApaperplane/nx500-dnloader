@@ -13,6 +13,24 @@
 
 ---
 
+## 0. Closed-Case Recovery Discovery: Unbrick NX500 Without Disassembly
+
+By correlating this repository's `boot0` recovery-branch disassembly (GPIOs `19`, `27`, `30`, `31`) with Samsung's official NX500 GPL kernel definitions (`include/gpio_map_nx500.h`), a previously undocumented **built-in firmware recovery mode** has been independently identified and verified on real **Samsung NX500** hardware (recovering a camera soft-bricked after `nx-on-wake`—also applicable to `systemctl rescue` and similar soft bricks).
+
+**Recovery button combination (no disassembly, no motherboard shorting, no UART, no `downloader.bin`):**
+
+1. Place an official, unmodified `nx500.bin` firmware file (for example v1.12) in the root of a clean **FAT32** SD card.
+2. Remove the battery, insert the SD card, flip the display **fully upward into the selfie position**, and reinsert the battery (power switch OFF).
+3. Hold **MOBILE (Wi-Fi)** + **AEL** + **full Shutter** simultaneously, then switch the camera **ON**.
+4. Release the buttons when the **Recovery Mode** menu appears (`F/W Check` / `Update` / `Update Finish`), then **hold the shutter button** as prompted to flash `nx500.bin`.
+
+> **Warnings and distinction from `downloader.bin`:**
+> - **Use official, unmodified firmware only**, use a charged battery, and **never interrupt power** during `Updating / Do not power off.` until `Update Finish` completes.
+> - **Verified scope:** Confirmed end-to-end on a soft-bricked **NX500** through `Update Finish` and normal reboot. **Not verified on the NX1** or other Samsung NX cameras (different GPIO map, no flip-up screen).
+> - **Closed-case `boot0`/`rImage` recovery vs. Boot ROM `downloader.bin` recovery:** This button combination invokes `boot0`'s built-in `rImage` recovery path and resolves soft bricks where `boot0` and `rImage` remain intact. Boot ROM / Main PCB Recovery using `downloader.bin` (or the UART bootloader shell) is still needed only if `boot0` itself is damaged or cannot boot.
+
+---
+
 ## 1. Bottom line
 
 | Question | Answer |
@@ -96,7 +114,7 @@ with only the UART base swapped to `0x10009000`. Raw output in
 | What filename bootROM looks for on SD | ❌ | Undocumented; service manual says `dnloader.bin` |
 | Whether load address is 0x02000000 | ❌ | The skeleton is designed to *print* this |
 | SD card init | ❌ | Skeleton has UART only, no SD driver yet |
-| Whether GPIO 19/27/30/31 are the TP short points | ❌ | Not verified against hardware |
+| Whether GPIO 19/27/30/31 are the TP short points | ✅ | **Verified as external controls** (`WIFI` + `AEL` + `Shutter2` + `Flip-up selfie screen`); triggers closed-case `rImage` recovery with official `nx500.bin` (NX500 verified, NX1 unverified) |
 
 **The value here is turning "completely blank" into "one power-cycle experiment away".**
 

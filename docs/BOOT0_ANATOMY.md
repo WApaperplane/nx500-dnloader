@@ -204,11 +204,21 @@ DDR 与 UART 初始化都已免掉。
 收益：`test flash erase` / `test flash read` / `boot` 三件套立即可用。
 **这条路的性价比远高于写 dnloader**，且是后两条的前提。
 
-### 路线 B：让 boot0 走 recovery 分支（不写代码，但要动机器）
+### 路线 B：让 boot0 走 recovery 分支（已实证为免拆机外部组合键，仅限 NX500）
 
-`ctrl->[0xC0] == 1` 或四个 GPIO(19/27/30/31) 全低。
-前者需要 bootROM 传参，后者疑似就是**维修手册说的"短接 TP"**。
-★ 未验证：这两个 GPIO 是否真的对应测试点。
+`ctrl->[0xC0] == 1` 或四个 GPIO(`19 / 27 / 30 / 31`) 全读为 `0`（低电平有效）。
+此前文档推测这四个 GPIO 对应维修手册里的主板短接测试点；对照官方 NX500 GPL 内核源码 `include/gpio_map_nx500.h`（`DRIME5_GPIOx(y) = x * 8 + y`）并经真实硬件验证，**四个引脚全部是机身外部可直接操作的按键/传感器**：
+
+| GPIO | `gpio_map_nx500.h` 宏 | 内核定义 | 机身对应操作 |
+|---|---|---|---|
+| `19` | `DRIME5_GPIO2(3)` | `GPIO_WIFI_KEY` | 按住 MOBILE (Wi-Fi) 键 |
+| `27` | `DRIME5_GPIO3(3)` | `GPIO_SHUTTER_KEY2` | 全按快门键 |
+| `30` | `DRIME5_GPIO3(6)` | `GPIO_FLIPUP_INT` | 翻转屏完全翻起至自拍位 |
+| `31` | `DRIME5_GPIO3(7)` | `GPIO_AEL_KEY` | 按住 AEL 键 |
+
+**免拆机操作与实机结果**：将官方未修改的 `nx500.bin` 放进干净的 FAT32 SD 卡根目录，拔电池插卡并将屏幕翻至自拍位后装回电池，按住 `MOBILE (Wi-Fi) + AEL + 全快门` 开机即可进入内置 `Recovery Mode`（加载 `rImage`），随后按提示长按快门完成 `F/W Check` → `Updating` → `Update Finish`，已在一台因 `nx-on-wake` 软砖的 NX500 上完整恢复正常开机（刷写途中严禁断电；NX1 未验证且无翻转屏）。
+
+**与 Boot ROM `downloader.bin` 的分工**：此路线适用于 `boot0` 与 `rImage`（p13）仍完好的软砖（如 `nx-on-wake`、`systemctl rescue`、rootfs/休眠损坏）；仅当 `boot0` 自身受损或无法执行到该分支时，才仍需路线 A（UART shell）或路线 C（Boot ROM 加载 `downloader.bin`）。
 
 ### 路线 C：写最小 dnloader（真正的 L3）
 
@@ -279,7 +289,7 @@ python -c "import zlib;d=open('p13.bin','rb').read();print(len(zlib.decompressob
 |---|---|---|
 | 1 | `0x002D4801` / `0x4C4C` 作为 load_image 参数的精确语义 | 疑为 (src_offset, block_count)；0x4C4C×512 = 9.54 MiB ≈ 10M 分区 |
 | 2 | `*(0x0200E074)` 控制块的结构布局 | 已知 +0x40/44/48 三参数、+0xc0 模式字节；入口来自 bootROM |
-| 3 | 四 GPIO(19/27/30/31) 是否就是维修手册的短接 TP | 未验证 |
+| 3 | 四 GPIO(19/27/30/31) 的物理对应 | **已实证（NX500）**：对应 `GPIO_WIFI_KEY`/`GPIO_SHUTTER_KEY2`/`GPIO_FLIPUP_INT`/`GPIO_AEL_KEY`，可免拆机触发 `rImage` 并刷 `nx500.bin` 完成救砖（NX1 未验证） |
 | 4 | bootROM 加载 dnloader 的地址与文件名规则 | 未验证（需 UART） |
 | 5 | SD 控制器基址 | 待从 p13 内核挖（下一步） |
 | 6 | shell 的按键窗口时长 | 10 次轮询无延时，需连发 |
