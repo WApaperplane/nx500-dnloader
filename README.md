@@ -11,6 +11,24 @@ English: [README_en.md](README_en.md)
 
 ---
 
+## 0. 重大进展：已发现免拆机隐藏恢复模式（仅限 NX500 软砖恢复 / Unbrick）
+
+借助本仓库对 `boot0` recovery 分支（GPIO 19/27/30/31）的逆向结果，并对照三星官方 NX500 GPL 内核源码 `include/gpio_map_nx500.h`，已独立定位并在真实 NX500 硬件上验证了**免拆机、无需短接主板、无需串口、无需 `downloader.bin` 的内置固件恢复模式**（适用于 `nx-on-wake` 失败、`systemctl rescue` 卡死等软砖场景）：
+
+**外部按键组合（实机验证通过）：**
+
+1. 下载官方原版未修改的 NX500 固件（如 v1.12），将 `nx500.bin` 解压到干净的 **FAT32** SD 卡根目录。
+2. 拔出电池，插入 SD 卡，将后背屏幕**完全向上翻起至自拍位**，重新装入电池（保持电源开关关闭）。
+3. 同时按住 **MOBILE (Wi-Fi)** 键 + **AEL** 键 + **全按快门**，再拨动电源开关开机。
+4. 屏幕出现蓝底 **Recovery Mode** 界面（`F/W Check` / `Update` / `Update Finish`）后松手，按屏幕提示**长按快门键**开始刷写 `nx500.bin`。
+
+> **注意与边界：**
+> - **务必使用官方未修改固件**，刷写期间（`Updating / Do not power off.`）确保电量充足，**切勿断电或拔电池**，直至出现 `Update Finish`。
+> - **实机验证范围**：已在因 `nx-on-wake` 软砖的 NX500 上完整走通 `Recovery Mode` → `F/W Check` → `Updating` → `Update Finish` 并正常开机；**未在 NX1 或其他机型上验证**（NX1 GPIO 定义不同且无翻转屏）。
+> - **与 Boot ROM `downloader.bin` 恢复的区别**：该免拆机恢复依赖 `boot0` 与内部 `rImage`（p13）完好，可解决系统层/休眠镜像软砖；只有当 `boot0` 本身损坏或无法进入 `boot0` 时，才需要主板 Boot ROM 级 `downloader.bin` 或 UART 救砖。
+
+---
+
 ## 1. 结论先行
 
 | 问题 | 答案 |
@@ -91,7 +109,7 @@ cd src && sh run_qemu_test.sh
 | bootROM 在 SD 上认什么文件名 | ❌ | 无文档；维修手册说 `dnloader.bin` |
 | 加载地址是否也是 0x02000000 | ❌ | 骨架就是为这个设计的——它会自己打印出来 |
 | SD 卡初始化能否跑通 | ❌ | 骨架还不含 SD 驱动，只有 UART |
-| 四 GPIO(19/27/30/31) 是否就是短接点 | ❌ | 未与实机验证 |
+| 四 GPIO(19/27/30/31) 是否就是短接点 | ✅ | **已实证为外部按键+翻转屏**（`WIFI`+`AEL`+`全快门`+`自拍翻转`），可免拆机进 `rImage` 刷官方 `nx500.bin`（NX1 未验证） |
 
 **这个仓库的价值在于把"完全空白"变成"只差一次上电实验"。**
 
